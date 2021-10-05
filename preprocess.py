@@ -1,9 +1,13 @@
 import numpy as np
 import pandas as pd
 from statistics import mean
+import argparse
 pd.options.mode.chained_assignment = None
-
-df = pd.read_csv('dating-full.csv')
+parser = argparse.ArgumentParser(description='')
+parser.add_argument('input')
+parser.add_argument('output')
+args = parser.parse_args()
+df = pd.read_csv(args.input)
 
 attributes = list(df.columns)
 cleanAttribCount = 0
@@ -38,13 +42,13 @@ for i in range(len(df['gender'])):
     df['field'][i] = field[df['field'][i]]
 print("Value assigned for male in column gender:",str(gender['male'])+'.')
 print("Value assigned for European/Caucasian-American in column race:", str(race['European/Caucasian-American'])+'.')
-print("Value assigned for Latino/Hispanic American in column race o:", str(race_o['Latino/Hispanic American'])+'.')
+print("Value assigned for Latino/Hispanic American in column race_o:", str(race_o['Latino/Hispanic American'])+'.')
 print("Value assigned for law in column field:", str(field['law'])+'.')
 
 for index, row in df.iterrows():
     total1 = df['attractive_important'][index] + df['sincere_important'][index] + df['intelligence_important'][index] + df['funny_important'][index] + df['ambition_important'][index] + df['shared_interests_important'][index]
     total2 = df['pref_o_attractive'][index] + df['pref_o_sincere'][index] + df['pref_o_intelligence'][index] + df['pref_o_funny'][index] + df['pref_o_ambitious'][index] + df['pref_o_shared_interests'][index]
-
+    
     df['attractive_important'][index] /=total1
     df['sincere_important'][index] /=total1
     df['intelligence_important'][index] /=total1
@@ -73,7 +77,7 @@ print("Mean of pref_o_funny: %.2f."%mean(df['pref_o_funny']))
 print("Mean of pref_o_ambitious: %.2f."%mean(df['pref_o_ambitious']))
 print("Mean of pref_o_shared_interests: %.2f."%mean(df['pref_o_shared_interests']))
 
-df.to_csv('dating.csv', index=False)
+df.to_csv(args.output, index=False)
 
     
     
