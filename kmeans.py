@@ -7,7 +7,7 @@ from scipy.spatial.distance import cdist
 import time
 np.random.seed(0)
 
-data = pd.read_csv('digits-embedding.csv')
+data = pd.read_csv('digits-embedding.csv', header=None)
 def euclidean_dist(point1, point2):
     dist = 0.0
     for i in range(2, len(point1)):
@@ -31,7 +31,7 @@ def dist_in_vector(ele, curVector):
     for i in curVector:
         dist+= euclidean_dist(ele, i)
     return dist/(len(curVector)-1)
-def calcStuff(membershipVector, init_centroids, data):
+def calcStuff(membershipVector, init_centroids, data, membershipDict):
     wc_ssd = 0
     silCoef = 0
     nmi = 0
@@ -69,34 +69,35 @@ def calcStuff(membershipVector, init_centroids, data):
         membershipVector[i] = membershipVector[i].drop('id', axis=1)
         membershipVector[i] = membershipVector[i].drop('class', axis=1)
         membershipVector[i] = np.asarray(membershipVector[i])
-    """
-    for i in range(len(membershipVector)):
-        curVector = membershipVector[i]
-        remVectors = copy.copy(membershipVector)
+    start = time.time()
+    distances = cdist(data, data)
 
-        #print(remVectors)
-        #print(curVector)
+
+
+    clusters = list(set(membershipDict.values()))
+    S_i = []
+    count = 1
+    for cluster in clusters:
+        elements = [int(i) for i, v in membershipDict.items() if v == cluster]
+
+        cur_cluster = [1 if i in elements else 0 for i in range(len(data))]
+        other_elem = [0 if i in elements else 1 for i in range(len(data))]
         
-        try:
-            remVectors.remove(curVector)
-            remVectors = [item for sublist in remVectors for item in sublist]
-        except:
-            remVectors = [list(item) for sublist in remVectors for item in sublist]
-            for item in curVector:
-                if item in remVectors:
-                    remVectors.remove(item)
-        
-        #print(remVectors)
-        #print(len(remVectors))
-        distances_self = cdist(curVector, curVector)
-        A_vals = [sum(i)/(len(i)-1) for i in distances_self]
-        
-        distances_other = cdist(curVector, remVectors)
-        B_vals = [sum(i)/len(i) for i in distances_other]
-        for i in range(len(B_vals)):
-            S_i.append((B_vals[i] - A_vals[i])/max(A_vals[i], B_vals[i]))
-    """
-    silCoef = mean(S_i)            
+
+        for element in elements:
+
+            A_list = np.multiply(cur_cluster, distances[element])
+            B_list = np.multiply(other_elem, distances[element])
+
+            A_val = np.sum(A_list)
+            A_val = A_val/(len(A_list)-1)
+            B_val = np.sum(B_list)
+            B_val = B_val/len(B_list)
+            S_i.append((B_val-A_val)/max(B_val, A_val))
+
+    silCoef = mean(S_i)
+    end = time.time()
+    print("SC Computation done in ", end-start)
          
             
     return wc_ssd, silCoef, nmi
@@ -174,7 +175,7 @@ def kmeans(K, data):
 
 
             
-    wc_ssd, silCoef, nmi = calcStuff(membershipVector, init_centroids, data)
+    wc_ssd, silCoef, nmi = calcStuff(membershipVector, init_centroids, data, membershipDict)
     print("WC-SSD: ",str(wc_ssd))
     print("SC: ", str(silCoef))
     print("NMI: ", str(nmi))
