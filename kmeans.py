@@ -94,6 +94,8 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict):
             B_val = np.sum(B_list)
             B_val = B_val/len(B_list)
             S_i.append((B_val-A_val)/max(B_val, A_val))
+            print(count)
+            count+=1
 
     silCoef = mean(S_i)
     end = time.time()
