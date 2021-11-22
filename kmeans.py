@@ -128,7 +128,7 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict, distances=
          
             
     return wc_ssd, silCoef, nmi
-def kmeans(K, data, distances_valid=[]):
+def kmeans(K, data, distances_valid=[], retCluster=False):
     data.columns = ['id', 'class', 'feature1', 'feature2']
     initial_centroid_indices = np.random.choice(len(data), K, replace=False)
     init_centroids = data.iloc[initial_centroid_indices]
@@ -207,7 +207,10 @@ def kmeans(K, data, distances_valid=[]):
     print("SC: ", str(silCoef))
     print("NMI: ", str(nmi))
     #print(membershipVector)
+    if(retCluster == True):
+        return wc_ssd, silCoef, nmi, membershipDict
     return wc_ssd, silCoef, nmi
+    
 
 if __name__ == '__main__':
     kmeans(10, data)    
