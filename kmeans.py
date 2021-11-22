@@ -31,7 +31,7 @@ def dist_in_vector(ele, curVector):
     for i in curVector:
         dist+= euclidean_dist(ele, i)
     return dist/(len(curVector)-1)
-def calcStuff(membershipVector, init_centroids, data, membershipDict):
+def calcStuff(membershipVector, init_centroids, data, membershipDict, distances=[]):
     wc_ssd = 0
     silCoef = 0
     nmi = 0
@@ -70,7 +70,11 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict):
         membershipVector[i] = membershipVector[i].drop('class', axis=1)
         membershipVector[i] = np.asarray(membershipVector[i])
     start = time.time()
-    distances = cdist(data, data)
+    new_data = copy.copy(data)
+    new_data = new_data.drop('id', axis=1)
+    new_data = new_data.drop('class', axis=1)
+    if(len(distances) == 0):
+        distances = cdist(new_data, new_data, metric='euclidean')
 
 
 
@@ -79,11 +83,31 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict):
     count = 1
     for cluster in clusters:
         elements = [int(i) for i, v in membershipDict.items() if v == cluster]
-
+        other_elements = [int(i) for i,v in membershipDict.items() if v!=cluster]
         cur_cluster = [1 if i in elements else 0 for i in range(len(data))]
+        len_cur_cluster = cur_cluster.count(1)
+        cur_cluster = np.asarray(cur_cluster)
         other_elem = [0 if i in elements else 1 for i in range(len(data))]
-        
-
+        len_rem_cluster = other_elem.count(1)
+        other_elem = np.asarray(other_elem)
+        st = time.time()
+        cluster_dist = np.take(distances, elements, axis=0)
+        #A_list = np.multiply(cluster_dist, cur_cluster)
+        #B_list = np.multiply(cluster_dist, other_elem)
+        A_list = np.take(cluster_dist.T, elements, axis=0).T
+        B_list = np.take(cluster_dist.T, other_elements, axis=0).T
+        print(A_list.shape)
+        print(B_list.shape)
+        print("HERE")
+        A_sum = np.sum(A_list, axis=1)/(len_cur_cluster-1)
+        B_sum = np.sum(B_list, axis=1)/(len_rem_cluster)
+        count = 0
+        print("After sum over len")
+        st = time.time()
+        S_i.extend([((B_sum[i]-A_sum[i])/max(A_sum[i], B_sum[i])) for i in range(len(A_sum))])
+        end = time.time()
+        print("Append time ", end-st)
+        """
         for element in elements:
 
             A_list = np.multiply(cur_cluster, distances[element])
@@ -96,14 +120,14 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict):
             S_i.append((B_val-A_val)/max(B_val, A_val))
             print(count)
             count+=1
-
+        """
     silCoef = mean(S_i)
     end = time.time()
     print("SC Computation done in ", end-start)
          
             
     return wc_ssd, silCoef, nmi
-def kmeans(K, data):
+def kmeans(K, data, distances_valid=[]):
     data.columns = ['id', 'class', 'feature1', 'feature2']
     initial_centroid_indices = np.random.choice(len(data), K, replace=False)
     init_centroids = data.iloc[initial_centroid_indices]
@@ -177,7 +201,7 @@ def kmeans(K, data):
 
 
             
-    wc_ssd, silCoef, nmi = calcStuff(membershipVector, init_centroids, data, membershipDict)
+    wc_ssd, silCoef, nmi = calcStuff(membershipVector, init_centroids, data, membershipDict, distances_valid)
     print("WC-SSD: ",str(wc_ssd))
     print("SC: ", str(silCoef))
     print("NMI: ", str(nmi))
