@@ -31,7 +31,8 @@ for data in [dataset1, dataset2, dataset3]:
         results[datacount][K]['wc'] = wc_ssd
         results[datacount][K]['sc'] = silCoef
         results[datacount][K]['nmi'] = nmi
+
 with open('results.json', 'w') as fp:
     json.dump(results, fp)
 
-        
+

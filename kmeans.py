@@ -5,9 +5,12 @@ import copy
 import math
 from scipy.spatial.distance import cdist
 import time
-np.random.seed(0)
+import argparse
 
-data = pd.read_csv('digits-embedding.csv', header=None)
+pd.options.mode.chained_assignment = None
+np.seterr(all='ignore')
+
+
 def euclidean_dist(point1, point2):
     dist = 0.0
     for i in range(2, len(point1)):
@@ -128,8 +131,9 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict, distances=
          
             
     return wc_ssd, silCoef, nmi
-def kmeans(K, data, distances_valid=[], retCluster=False):
+def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0):
     data.columns = ['id', 'class', 'feature1', 'feature2']
+    np.random.seed(seed_value)
     initial_centroid_indices = np.random.choice(len(data), K, replace=False)
     init_centroids = data.iloc[initial_centroid_indices]
     #print(init_centroids)
@@ -213,4 +217,11 @@ def kmeans(K, data, distances_valid=[], retCluster=False):
     
 
 if __name__ == '__main__':
-    kmeans(10, data)    
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('dataFileName')
+    parser.add_argument('kvalue')
+    args = parser.parse_args()
+    data = args.dataFileName
+    k_value = args.kvalue
+    data = pd.read_csv(data, header=None)
+    kmeans(int(k_value), data)    
