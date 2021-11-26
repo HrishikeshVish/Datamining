@@ -22,7 +22,7 @@ for i in range(len(dataset3['id'])):
 
 results = {}
 datacount = 0
-K_vals = [4,8,16,32]
+K_vals = [2,4,8,16,32]
 for data in [dataset1, dataset2, dataset3]:
     datacount+=1
     temp = copy.copy(data)
