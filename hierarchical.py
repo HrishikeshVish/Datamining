@@ -50,7 +50,25 @@ def silCoef(sorted_data, input_dataset):
         S_i.extend((B_sum[i]-A_sum[i])/max(A_sum[i], B_sum[i]) for i in range(len(A_sum)))
     return mean(S_i)
                
-        
+def nmi(sorted_data, input_dataset):
+    classes = sorted_data.keys()
+    p_c = {}
+    for i in classes:
+        p_c[i] = len(sorted_data[i])/len(input_dataset)
+    inf_gain = 0
+    for cluster in classes:
+        ground_class = [i[0] for i in sorted_data[cluster]]
+        for clas in set(ground_class):
+            expansion = ground_class.count(clas)/len(ground_class)
+            inf_gain+= expansion *math.log(expansion/p_c[clas] *len(sorted_data[cluster])/len(input_dataset))
+    prob_classes = 0
+    for clas in set(classes):
+        prob_classes += p_c[clas] * math.log(p_c[clas])
+    prob_cluster = 0
+    for cluster in classes:
+        prob_cluster += (len(sorted_data[cluster])/len(input_dataset)) * math.log((len(sorted_data[cluster])/len(input_dataset)))
+    nmi = inf_gain / (-1*(prob_cluster + prob_classes))
+    return nmi
         
 
 dataset1 = pd.read_csv('digits-embedding.csv', header=None)
@@ -71,6 +89,7 @@ input_dataset = pd.concat([class0, class1, class2, class3, class4, class5,
 input_dataset = input_dataset.sample(frac=1, random_state=24)
 input_dataset = input_dataset.drop('id', axis=1)
 class_labels = list(input_dataset['class'])
+nmi_input_dataset = input_dataset
 input_dataset = input_dataset.drop('class', axis=1)
 
 cluster_single = linkage(input_dataset, method='single', metric='euclidean')
@@ -140,6 +159,7 @@ for cluster_K in cut_cluster_average:
         ele_dict[cluster_K[element]].append(list(input_dataset[element]))
     centroids = getCentroids(ele_dict)
     wcssd = within_cluster_ssd(ele_dict, centroids)
+    print(ele_dict)
     res_dict['average'][count].append(wcssd)
     res_dict['average'][count].append(silCoef(ele_dict, input_dataset))
     count*=2

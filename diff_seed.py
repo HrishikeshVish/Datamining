@@ -8,6 +8,7 @@ from statistics import mean, stdev
 import math
 import random
 import matplotlib.pyplot as plt
+
 dataset1 = pd.read_csv('digits-embedding.csv', header=None)
 dataset1.columns = ['id', 'class', 'feature1', 'feature2']
 dataset2 = dataset1[dataset1['class'].isin([2,4,6,7])]
@@ -45,52 +46,32 @@ for data in [dataset1, dataset2, dataset3]:
         results[datacount][K]['sc'] = [mean(results[datacount][K]['sc']), stdev(results[datacount][K]['sc'])/math.sqrt(10)]
 with open('results_10.json', 'w') as fp:
     json.dump(results, fp)
+
+
+K_vals = ['2','4','8','16','32']
 with open('results_10.json') as fp:
     results = json.load(fp)
-"""
-wc_mean_vals = []
-sc_mean_vals = []
-wc_std_vals = []
-sc_std_vals = []
-for i in K_vals:
-    wc_mean_vals.append(results[1][i]['wc'][0])
-    wc_std_vals.append(results[1][i]['wc'][1])
-    sc_mean_vals.append(results[1][i]['sc'][0])
-    sc_std_vals.append(results[1][i]['sc'][1])
-
-plt.errorbar(K_vals, wc_mean_vals, fmt='blue', yerr=wc_std_vals, label='WC')
-plt.xlabel('K - Value')
-plt.ylabel('WC-SSD')
-
-plt.legend()
-plt.show()
-plt.errorbar(K_vals, sc_mean_vals, fmt='red', yerr=sc_std_vals, label='SC')
-plt.xlabel('K - Value')
-plt.ylabel('SC')
-
-plt.legend()
-plt.show()
 
 wc_mean_vals = []
 sc_mean_vals = []
 wc_std_vals = []
 sc_std_vals = []
 for i in K_vals:
-    wc_mean_vals.append(results[2][i]['wc'][0])
-    wc_std_vals.append(results[2][i]['wc'][1])
-    sc_mean_vals.append(results[2][i]['sc'][0])
-    sc_std_vals.append(results[2][i]['sc'][1])
+    wc_mean_vals.append(results['1'][i]['wc'][0])
+    wc_std_vals.append(results['1'][i]['wc'][1])
+    sc_mean_vals.append(results['1'][i]['sc'][0])
+    sc_std_vals.append(results['1'][i]['sc'][1])
 
 plt.errorbar(K_vals, wc_mean_vals, fmt='blue', yerr=wc_std_vals, label='WC')
 plt.xlabel('K - Value')
 plt.ylabel('WC-SSD')
-
+plt.title("Dataset 1 WC-SSD vs K")
 plt.legend()
 plt.show()
 plt.errorbar(K_vals, sc_mean_vals, fmt='red', yerr=sc_std_vals, label='SC')
 plt.xlabel('K - Value')
 plt.ylabel('SC')
-
+plt.title("Dataset 1 SilCoef vs K")
 plt.legend()
 plt.show()
 
@@ -99,21 +80,44 @@ sc_mean_vals = []
 wc_std_vals = []
 sc_std_vals = []
 for i in K_vals:
-    wc_mean_vals.append(results[3][i]['wc'][0])
-    wc_std_vals.append(results[3][i]['wc'][1])
-    sc_mean_vals.append(results[3][i]['sc'][0])
-    sc_std_vals.append(results[3][i]['sc'][1])
+    wc_mean_vals.append(results['2'][i]['wc'][0])
+    wc_std_vals.append(results['2'][i]['wc'][1])
+    sc_mean_vals.append(results['2'][i]['sc'][0])
+    sc_std_vals.append(results['2'][i]['sc'][1])
 
 plt.errorbar(K_vals, wc_mean_vals, fmt='blue', yerr=wc_std_vals, label='WC')
 plt.xlabel('K - Value')
 plt.ylabel('WC-SSD')
-
+plt.title("Dataset 2 WC-SSD vs K")
 plt.legend()
 plt.show()
 plt.errorbar(K_vals, sc_mean_vals, fmt='red', yerr=sc_std_vals, label='SC')
 plt.xlabel('K - Value')
 plt.ylabel('SC')
-
+plt.title("Dataset 2 SilCoef vs K")
 plt.legend()
 plt.show()
-"""
+
+wc_mean_vals = []
+sc_mean_vals = []
+wc_std_vals = []
+sc_std_vals = []
+for i in K_vals:
+    wc_mean_vals.append(results['3'][i]['wc'][0])
+    wc_std_vals.append(results['3'][i]['wc'][1])
+    sc_mean_vals.append(results['3'][i]['sc'][0])
+    sc_std_vals.append(results['3'][i]['sc'][1])
+
+plt.errorbar(K_vals, wc_mean_vals, fmt='blue', yerr=wc_std_vals, label='WC')
+plt.xlabel('K - Value')
+plt.ylabel('WC-SSD')
+plt.title("Dataset 3 WC-SSD vs K")
+plt.legend()
+plt.show()
+plt.errorbar(K_vals, sc_mean_vals, fmt='red', yerr=sc_std_vals, label='SC')
+plt.xlabel('K - Value')
+plt.ylabel('SC')
+plt.title("Dataset 3 SilCoef vs K")
+plt.legend()
+plt.show()
+
