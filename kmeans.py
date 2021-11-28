@@ -209,7 +209,7 @@ def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0, print_
         
         
         else:
-            if(printEpoch):
+            if(print_epoch):
                 print("Epoch ", str(epoch), " ", str(count), " Element(s) Changed")
 
             init_centroids = change_centroid(init_centroids, membershipVector)
