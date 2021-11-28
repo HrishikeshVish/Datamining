@@ -40,30 +40,40 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict, distances=
     nmi = 0
     for i in range(len(membershipVector)):
         for ele in membershipVector[i]:
-            wc_ssd += euclidean_dist(ele, init_centroids[i])
+            wc_ssd += (euclidean_dist(ele, init_centroids[i])**2)
     
 
     
     classes = list(data['class'])
     p_c = {}
-    for i in set(classes):
+    for i in sorted(list(set(classes))):
         p_c[i] = classes.count(i)/len(classes)
     inf_gain = 0
-    
+    p_g = {}
+    for i in range(len(membershipVector)):
+        p_g[i] = len(membershipVector[i])/len(classes)
+    inf_gain  = 0
+    prob_classes = 0
+    for clas in sorted(list(set(classes))):
+        prob_classes += p_c[clas] * math.log(p_c[clas], math.e)
+    prob_cluster = 0
+
     for cluster in membershipVector:
-        cur_classes = [i[1] for i in cluster]
+        p_cluster = len(cluster)/len(classes)
+        prob_cluster += p_cluster *math.log(p_cluster ,math.e)
+    for cluster in range(len(membershipVector)):
+        cur_classes = [i[1] for i in membershipVector[cluster]]
+        inf_gain_cluster = 0
         for clas in set(cur_classes):
             
             expansion = cur_classes.count(clas)/len(cur_classes)
-            inf_gain += expansion * math.log(expansion/(p_c[clas] *(len(cluster)/len(data))))
-    prob_classes = 0
-    for clas in set(classes):
-        prob_classes += p_c[clas] * math.log(p_c[clas])
-    prob_cluster = 0
-    for cluster in membershipVector:
-        prob_cluster += (len(cluster)/len(data)) *math.log((len(cluster)/len(data)))
+            #inf_gain += expansion * math.log(expansion/(p_c[clas] *p_g[cluster]),2)
+            inf_gain_cluster += expansion * math.log(expansion,math.e)
+        inf_gain_cluster = -1 * p_g[cluster] * inf_gain_cluster
+        inf_gain += inf_gain_cluster
+    inf_gain = (-1*prob_classes) - inf_gain
+
     nmi = inf_gain / (-1*(prob_cluster + prob_classes))
-        
     S_i = []
     count = 0
     for i in range(len(membershipVector)):
@@ -200,7 +210,7 @@ def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0):
         
         
         else:
-            print("Epoch ", str(epoch), " ", str(count), " Element(s) Changed")
+            #print("Epoch ", str(epoch), " ", str(count), " Element(s) Changed")
 
             init_centroids = change_centroid(init_centroids, membershipVector)
 

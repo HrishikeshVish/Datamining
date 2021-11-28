@@ -4,6 +4,7 @@ import numpy as np
 from scipy.cluster.hierarchy import dendrogram, linkage, cut_tree
 from scipy.spatial.distance import pdist, cdist
 from statistics import mean
+import math
 import copy
 def getCentroids(sorted_data):
     classes = sorted_data.keys()
@@ -29,7 +30,7 @@ def within_cluster_ssd(sorted_data, centroids):
     for i in classes:
         elements = sorted_data[i]
         for element in elements:
-            wc_ssd += euclidean_dist(element, centroids[i])
+            wc_ssd += (euclidean_dist(element, centroids[i])**2)
     return wc_ssd
 def silCoef(sorted_data, input_dataset):
     classes = sorted_data.keys()
@@ -52,21 +53,29 @@ def silCoef(sorted_data, input_dataset):
                
 def nmi(sorted_data, input_dataset):
     classes = sorted_data.keys()
+    #print(sorted_data)
     p_c = {}
-    for i in classes:
-        p_c[i] = len(sorted_data[i])/len(input_dataset)
+    for i in range(10):
+        p_c[i] = 10/len(input_dataset)
+    prob_classes = 0
+    for clas in range(10):
+        prob_classes += p_c[clas] * math.log(p_c[clas], math.e)
+    prob_cluster = 0
+    for cluster in classes:
+        prob_cluster += (len(sorted_data[cluster])/len(input_dataset)) * math.log((len(sorted_data[cluster])/len(input_dataset)), math.e)
+        
     inf_gain = 0
     for cluster in classes:
         ground_class = [i[0] for i in sorted_data[cluster]]
+        info_gain_cluster = 0
         for clas in set(ground_class):
             expansion = ground_class.count(clas)/len(ground_class)
-            inf_gain+= expansion *math.log(expansion/p_c[clas] *len(sorted_data[cluster])/len(input_dataset))
-    prob_classes = 0
-    for clas in set(classes):
-        prob_classes += p_c[clas] * math.log(p_c[clas])
-    prob_cluster = 0
-    for cluster in classes:
-        prob_cluster += (len(sorted_data[cluster])/len(input_dataset)) * math.log((len(sorted_data[cluster])/len(input_dataset)))
+            info_gain_cluster+= expansion *math.log(expansion, math.e)
+        info_gain_cluster = -1 * (len(sorted_data[cluster])/len(input_dataset)) * info_gain_cluster
+        inf_gain += info_gain_cluster
+    inf_gain = (-1*prob_classes) - inf_gain
+            
+    
     nmi = inf_gain / (-1*(prob_cluster + prob_classes))
     return nmi
         
@@ -89,7 +98,7 @@ input_dataset = pd.concat([class0, class1, class2, class3, class4, class5,
 input_dataset = input_dataset.sample(frac=1, random_state=24)
 input_dataset = input_dataset.drop('id', axis=1)
 class_labels = list(input_dataset['class'])
-nmi_input_dataset = input_dataset
+nmi_input_dataset = np.asarray(input_dataset)
 input_dataset = input_dataset.drop('class', axis=1)
 
 cluster_single = linkage(input_dataset, method='single', metric='euclidean')
@@ -128,38 +137,48 @@ res_dict = {'single':{2:[], 4:[], 8:[], 16:[], 32:[]}, 'complete':{2:[], 4:[], 8
 count = 2
 for cluster_K in cut_cluster_single:
     ele_dict = {}
+    ele_dict_nmi = {}
     for element in range(len(cluster_K)):
         if(cluster_K[element] not in ele_dict.keys()):
             ele_dict[cluster_K[element]] = []
+            ele_dict_nmi[cluster_K[element]] = []
         ele_dict[cluster_K[element]].append(list(input_dataset[element]))
+        ele_dict_nmi[cluster_K[element]].append(list(nmi_input_dataset[element]))
     centroids = getCentroids(ele_dict)
     wcssd = within_cluster_ssd(ele_dict, centroids)
+    print("NMI = ", nmi(ele_dict_nmi, input_dataset))
     res_dict['single'][count].append(wcssd)
     res_dict['single'][count].append(silCoef(ele_dict, input_dataset))
     count*=2
 count = 2
 for cluster_K in cut_cluster_complete:
     ele_dict = {}
+    ele_dict_nmi = {}
     for element in range(len(cluster_K)):
         if(cluster_K[element] not in ele_dict.keys()):
             ele_dict[cluster_K[element]] = []
+            ele_dict_nmi[cluster_K[element]] = []
         ele_dict[cluster_K[element]].append(list(input_dataset[element]))
+        ele_dict_nmi[cluster_K[element]].append(list(nmi_input_dataset[element]))
     centroids = getCentroids(ele_dict)
     wcssd = within_cluster_ssd(ele_dict, centroids)
-    
+    print("NMI = ", nmi(ele_dict_nmi, input_dataset))
     res_dict['complete'][count].append(wcssd)
     res_dict['complete'][count].append(silCoef(ele_dict, input_dataset))
     count*=2
 count = 2
 for cluster_K in cut_cluster_average:
     ele_dict = {}
+    ele_dict_nmi = {}
     for element in range(len(cluster_K)):
         if(cluster_K[element] not in ele_dict.keys()):
             ele_dict[cluster_K[element]] = []
+            ele_dict_nmi[cluster_K[element]] = []
         ele_dict[cluster_K[element]].append(list(input_dataset[element]))
+        ele_dict_nmi[cluster_K[element]].append(list(nmi_input_dataset[element]))
     centroids = getCentroids(ele_dict)
     wcssd = within_cluster_ssd(ele_dict, centroids)
-    print(ele_dict)
+    print("NMI = ", nmi(ele_dict_nmi, input_dataset))
     res_dict['average'][count].append(wcssd)
     res_dict['average'][count].append(silCoef(ele_dict, input_dataset))
     count*=2
