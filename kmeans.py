@@ -23,7 +23,6 @@ def find_ele(element, vector):
     return -1
 def change_centroid(init_centroids, membershipVector):
     for i in range(len(init_centroids)):
-        #membershipVector[i].append(list(init_centroids[i]))
         coord1 = [j[2] for j in membershipVector[i]]
         coord2 = [j[3] for j in membershipVector[i]]
         init_centroids[i][0] = mean(coord1)
@@ -141,7 +140,7 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict, distances=
          
             
     return wc_ssd, silCoef, nmi
-def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0):
+def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0, print_epoch=False):
     data.columns = ['id', 'class', 'feature1', 'feature2']
     np.random.seed(seed_value)
     initial_centroid_indices = np.random.choice(len(data), K, replace=False)
@@ -210,7 +209,8 @@ def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0):
         
         
         else:
-            #print("Epoch ", str(epoch), " ", str(count), " Element(s) Changed")
+            if(printEpoch):
+                print("Epoch ", str(epoch), " ", str(count), " Element(s) Changed")
 
             init_centroids = change_centroid(init_centroids, membershipVector)
 

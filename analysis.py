@@ -26,7 +26,7 @@ for data in [dataset1, dataset2, dataset3]:
     distances = cdist(temp, temp, metric='euclidean')
     results[datacount] = {}
     for K in [2, 4, 8, 16,32]:
-        wc_ssd, silCoef, nmi = kmeans(K, data, distances)
+        wc_ssd, silCoef, nmi = kmeans(K, data, distances_valid=distances, print_epoch=True)
         results[datacount][K] = {}
         results[datacount][K]['wc'] = wc_ssd
         results[datacount][K]['sc'] = silCoef
