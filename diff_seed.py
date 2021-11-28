@@ -38,7 +38,7 @@ for data in [dataset1, dataset2, dataset3]:
         results[datacount][K]['nmi'] = []
         for i in range(10):
             seed_val = random.randint(0,100)
-            wc_ssd, silCoef, nmi = kmeans(K, data, distances, seed_value=seed_val)
+            wc_ssd, silCoef, nmi = kmeans(K, data, distances_valid=distances, seed_value=seed_val, print_epoch=True)
             results[datacount][K]['wc'].append(wc_ssd)
             results[datacount][K]['sc'].append(silCoef)
             results[datacount][K]['nmi'].append(nmi)
