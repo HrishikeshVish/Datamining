@@ -14,9 +14,9 @@ dataset3.reset_index(inplace=True, drop=True)
 for i in range(len(dataset3['id'])):
 
     dataset3['id'][i] = i
-wc, sc, nmi, membershipDict1 = kmeans(32, dataset1, retCluster=True)
-wc, sc, nmi, membershipDict2 = kmeans(32, dataset2, retCluster=True)
-wc, sc, nmi, membershipDict3 = kmeans(32, dataset3, retCluster=True)
+wc, sc, nmi, membershipDict1 = kmeans(16, dataset1, retCluster=True)
+wc, sc, nmi, membershipDict2 = kmeans(4, dataset2, retCluster=True)
+wc, sc, nmi, membershipDict3 = kmeans(2, dataset3, retCluster=True)
 sample1 = dataset1.sample(n=1000, random_state=23)
 sample2 = dataset2.sample(n=1000, random_state=23)
 sample3 = dataset3.sample(n=1000, random_state=23)
@@ -33,22 +33,26 @@ for i in indexes2:
 for i in indexes3:
     sample3['class'][i] = membershipDict3[sample3['id'][i]]
 
-color = ['#'+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
-         for i in range(32)]
+color16 = ['#'+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+         for i in range(16)]
+color8 = ['#'+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+         for i in range(8)]
+color4 = ['#'+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+         for i in range(4)]
 colors1 = []
 class1 = sample1['class']
 for i in class1:
-    colors1.append(color[i])
+    colors1.append(color16[i])
     
 colors2 = []
 class2 = sample2['class']
 for i in class2:
-    colors2.append(color[i])
+    colors2.append(color8[i])
     
 colors3 = []
 class3 = sample3['class']
 for i in class3:
-    colors3.append(color[i])
+    colors3.append(color4[i])
 
 x_coord1 = sample1['feature1']
 y_coord1 = sample1['feature2']

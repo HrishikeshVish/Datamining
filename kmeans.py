@@ -33,15 +33,15 @@ def dist_in_vector(ele, curVector):
     for i in curVector:
         dist+= euclidean_dist(ele, i)
     return dist/(len(curVector)-1)
-def calcStuff(membershipVector, init_centroids, data, membershipDict, distances=[]):
+def wcssd(membershipVector, init_centroids):
     wc_ssd = 0
-    silCoef = 0
-    nmi = 0
     for i in range(len(membershipVector)):
         for ele in membershipVector[i]:
             wc_ssd += (euclidean_dist(ele, init_centroids[i])**2)
-    
+    return wc_ssd
 
+def calcNMI(data, membershipVector):
+    nmi = 0
     
     classes = list(data['class'])
     p_c = {}
@@ -73,6 +73,13 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict, distances=
     inf_gain = (-1*prob_classes) - inf_gain
 
     nmi = inf_gain / (-1*(prob_cluster + prob_classes))
+    return nmi
+def calcStuff(membershipVector, init_centroids, data, membershipDict, distances=[], membershipVector_ind =[]):
+    
+    wc_ssd = wcssd(membershipVector, init_centroids)
+    nmi = calcNMI(data, membershipVector)
+    silCoef = 0
+
     S_i = []
     count = 0
     for i in range(len(membershipVector)):
@@ -88,53 +95,28 @@ def calcStuff(membershipVector, init_centroids, data, membershipDict, distances=
     if(len(distances) == 0):
         distances = cdist(new_data, new_data, metric='euclidean')
 
+    A_sum = []
+    pair_distances_other = {}
+    start = time.time()
+    for i in range(len(membershipVector)):
+        if(i not in pair_distances_other.keys()):
+            pair_distances_other[i] = []
+        for j in range(i, len(membershipVector)):
+            distance = cdist(membershipVector[i], membershipVector[j], metric='euclidean')
+            if(i == j):
+                A_sum.extend(np.sum(distance, axis=1)/(len(membershipVector[i])-1))
+            else:
+                if j not in pair_distances_other.keys():
+                    pair_distances_other[j] = []
+                pair_distances_other[i].append(np.sum(distance,axis=1)/len(membershipVector[j]))
+                pair_distances_other[j].append(np.sum(distance.T, axis=1)/len(membershipVector[i]))
+    end = time.time()
+    B_sum = []
+    for keys in sorted(list(pair_distances_other.keys())):
+        pair_distances_other[keys] = np.asarray(pair_distances_other[keys])
+        B_sum.extend(np.min(pair_distances_other[keys], axis=0))
+    S_i.extend([((B_sum[i]-A_sum[i])/max(A_sum[i], B_sum[i])) for i in range(len(A_sum))])
 
-    del new_data
-    clusters = list(set(membershipDict.values()))
-    S_i = []
-    count = 1
-    for cluster in clusters:
-        elements = [int(i) for i, v in membershipDict.items() if v == cluster]
-        other_elements = [int(i) for i,v in membershipDict.items() if v!=cluster]
-
-
-
-        cluster_dist = np.take(distances, elements, axis=0)
-        values = list(membershipDict.values())
-        cluster2 = pd.DataFrame(cluster_dist)
-
-        A_list = np.asarray(cluster2.drop(other_elements, axis=1))
-        B_list = np.asarray(cluster2.drop(elements, axis=1))
-        del cluster2
-
-        #A_list = np.take(cluster_dist.T, elements, axis=0).T
-        #exit()
-        #B_list = np.take(cluster_dist.T, other_elements, axis=0).T
-
-        A_sum = np.sum(A_list, axis=1)/(len(A_list[0])-1)
-        
-        B_sum = np.sum(B_list, axis=1)/(len(B_list[0]))
-        del A_list
-        del B_list
-        count = 0
-
-
-        S_i.extend([((B_sum[i]-A_sum[i])/max(A_sum[i], B_sum[i])) for i in range(len(A_sum))])
-
-        """
-        for element in elements:
-
-            A_list = np.multiply(cur_cluster, distances[element])
-            B_list = np.multiply(other_elem, distances[element])
-
-            A_val = np.sum(A_list)
-            A_val = A_val/(len(A_list)-1)
-            B_val = np.sum(B_list)
-            B_val = B_val/len(B_list)
-            S_i.append((B_val-A_val)/max(B_val, A_val))
-            print(count)
-            count+=1
-        """
     silCoef = mean(S_i)
 
          
@@ -145,34 +127,26 @@ def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0, print_
     np.random.seed(seed_value)
     initial_centroid_indices = np.random.choice(len(data), K, replace=False)
     init_centroids = data.iloc[initial_centroid_indices]
-    #print(init_centroids)
-    indexes = list(init_centroids.index)
-    #remaining_points = data.drop(indexes)
-    remaining_points = data
-    init_centroids = np.asarray(init_centroids)
-    rem_points = copy.copy(remaining_points)
-    rem_points.set_index(['id', 'class'])
-    rem_points = rem_points.drop('id', axis=1)
-    rem_points = rem_points.drop('class', axis=1)
-    remaining_points = np.asarray(remaining_points)
-    membershipDict = {}
-    membershipVector = []
-    for i in range(K):
-        membershipVector.append([])
-    vector_euclid_dist = np.vectorize(euclidean_dist, signature='(n),(m)->()')
-    init_centroids = pd.DataFrame(init_centroids)
-    init_centroids.columns = ['id', 'class', 'x', 'y']
     init_centroids = init_centroids.drop('id', axis=1)
     init_centroids = init_centroids.drop('class', axis=1)
     init_centroids = np.asarray(init_centroids)
-    distances = cdist(rem_points, init_centroids, metric='euclidean')
+    
+    remaining_points = np.asarray(data)
+    
+    membershipDict = {}
+    membershipVector = []
+    membershipVector_ind = []
+    for i in range(K):
+        membershipVector.append([])
+        membershipVector_ind.append([])
+
+    distances = cdist(data[data.columns[[2,3]]], init_centroids, metric='euclidean')
     
 
     for i in range(len(distances)):
         min_dist_index = list(distances[i]).index(min(distances[i]))
-        membershipDict[remaining_points[i][0]] = min_dist_index
+        membershipDict[int(remaining_points[i][0])] = min_dist_index
         membershipVector[min_dist_index].append(list(remaining_points[i]))
-    #print(init_centroids)
     for i in range(len(init_centroids)):
         coord1 = [j[2] for j in membershipVector[i]]
         coord2 = [j[3] for j in membershipVector[i]]
@@ -186,7 +160,7 @@ def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0, print_
         changed_any = False
         count = 0
         start = time.time()
-        distances = cdist(rem_points, init_centroids, metric='euclidean')
+        distances = cdist(data[data.columns[[2,3]]], init_centroids, metric='euclidean')
         cur_indices = np.asarray(list(membershipDict.values()))
         min_dist_indices = np.asarray(distances.argmin(axis=1))        
         changed_indices = np.where(cur_indices != min_dist_indices, 1, 0)
@@ -197,14 +171,20 @@ def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0, print_
         for i in range(len(indices)):
             cur_index = membershipDict[remaining_points[indices[i]][0]]
             membershipVector[cur_index].remove(list(remaining_points[indices[i]]))
+            
             membershipVector[min_dist_index[i]].append(list(remaining_points[indices[i]]))
-            membershipDict[remaining_points[indices[i]][0]] = min_dist_index[i]
+            
+            membershipDict[int(remaining_points[indices[i]][0])] = min_dist_index[i]
             changed_any = True
             count+=1
 
         if(epoch == 48):
+            for key, value in membershipDict.items():
+                membershipVector_ind[value].append(key)
             break
         if(changed_any == False):
+            for key, value in membershipDict.items():
+                membershipVector_ind[value].append(key)
             changed = False
         
         
@@ -215,12 +195,11 @@ def kmeans(K, data, distances_valid=[], retCluster=False, seed_value = 0, print_
             init_centroids = change_centroid(init_centroids, membershipVector)
 
 
-    del rem_points
-    wc_ssd, silCoef, nmi = calcStuff(membershipVector, init_centroids, data, membershipDict, distances_valid)
+    wc_ssd, silCoef, nmi = calcStuff(membershipVector, init_centroids, data, membershipDict, distances_valid, membershipVector_ind)
     print("WC-SSD: ",str(wc_ssd))
     print("SC: ", str(silCoef))
     print("NMI: ", str(nmi))
-    #print(membershipVector)
+
     if(retCluster == True):
         return wc_ssd, silCoef, nmi, membershipDict
     return wc_ssd, silCoef, nmi

@@ -105,7 +105,7 @@ cluster_single = linkage(input_dataset, method='single', metric='euclidean')
 cluster_complete = linkage(input_dataset, method='complete', metric='euclidean')
 cluster_average = linkage(input_dataset, method='average', metric='euclidean')
 #cut_clusters = cut_tree(cluster, n_clusters=2)
-"""
+
 plt.figure(figsize=(25, 10))
 plt.title("Agglomerative Clustering - Single Linkage")
 plt.xlabel("Data Point")
@@ -128,7 +128,7 @@ plt.xlabel("Data Point")
 plt.ylabel("Distance")
 dendrogram(cluster_average, leaf_rotation=90, leaf_font_size=8, labels=class_labels)
 plt.show()
-"""
+
 cut_cluster_single = cut_tree(cluster_single, n_clusters=[2,4,8,16,32]).T
 cut_cluster_complete = cut_tree(cluster_complete, n_clusters=[2,4,8,16,32]).T
 cut_cluster_average = cut_tree(cluster_average, n_clusters=[2,4,8,16,32]).T
@@ -146,7 +146,7 @@ for cluster_K in cut_cluster_single:
         ele_dict_nmi[cluster_K[element]].append(list(nmi_input_dataset[element]))
     centroids = getCentroids(ele_dict)
     wcssd = within_cluster_ssd(ele_dict, centroids)
-    print("NMI = ", nmi(ele_dict_nmi, input_dataset))
+    print("Single Linkage K = ", count, " NMI = ", nmi(ele_dict_nmi, input_dataset))
     res_dict['single'][count].append(wcssd)
     res_dict['single'][count].append(silCoef(ele_dict, input_dataset))
     count*=2
@@ -162,7 +162,7 @@ for cluster_K in cut_cluster_complete:
         ele_dict_nmi[cluster_K[element]].append(list(nmi_input_dataset[element]))
     centroids = getCentroids(ele_dict)
     wcssd = within_cluster_ssd(ele_dict, centroids)
-    print("NMI = ", nmi(ele_dict_nmi, input_dataset))
+    print("Complete Linkage K = ", count, " NMI = ", nmi(ele_dict_nmi, input_dataset))
     res_dict['complete'][count].append(wcssd)
     res_dict['complete'][count].append(silCoef(ele_dict, input_dataset))
     count*=2
@@ -178,7 +178,7 @@ for cluster_K in cut_cluster_average:
         ele_dict_nmi[cluster_K[element]].append(list(nmi_input_dataset[element]))
     centroids = getCentroids(ele_dict)
     wcssd = within_cluster_ssd(ele_dict, centroids)
-    print("NMI = ", nmi(ele_dict_nmi, input_dataset))
+    print("Average Linkage K = ", count, " NMI = ", nmi(ele_dict_nmi, input_dataset))
     res_dict['average'][count].append(wcssd)
     res_dict['average'][count].append(silCoef(ele_dict, input_dataset))
     count*=2
